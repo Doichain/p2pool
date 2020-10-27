@@ -499,7 +499,7 @@ def run():
         help='call getauxblock on this url to get work for merged mining (example: http://ncuser:ncpass@127.0.0.1:10332/)',
         type=str, action='append', default=[], dest='merged_urls')
     parser.add_argument('--merged_addr',
-        help='call createauxblock/submitauxblock on this url to get work for merged mining and use payout address (example: payout%http://ncuser:ncpass@127.0.0.1:10332/)',
+        help='call createauxblock/submitauxblock on this url to get work for merged mining and use payout address (example: http://ncuser:ncpass@127.0.0.1:10332/?payout=payoutaddr)',
         type=str, action='append', default=[], dest='merged_urls_addr')
     parser.add_argument('--coinbtext',
         help='append this text to the coinbase',
@@ -660,11 +660,20 @@ def run():
     
     def separate_url(url, addr=False):
         paddr = None
+        paddrParam = None
         if addr:
-            if '%' not in url:
+            if '?' not in url:
                 parser.error('payoutaddress not specifed in merged url')
-            paddr, url = url.split('%')
-            print("Found payout %s for %s" % (paddr, url))
+            
+            url, paddrParam = url.split('?')
+            paddrPart = paddrParam.split('payout=')
+            
+            if paddrPart[1].find('&') > -1:
+	       paddr = paddrPart[1][:paddrPart[1].index('&')]
+            else:
+	      paddr = paddrPart[1]
+            
+        print("Found payout %s for %s" % (paddr, url))
         s = urlparse.urlsplit(url)
         if '@' not in s.netloc:
             parser.error('merged url netloc must contain an "@"')
